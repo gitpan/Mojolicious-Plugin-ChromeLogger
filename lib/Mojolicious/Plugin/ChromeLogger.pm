@@ -4,12 +4,12 @@ use Mojo::Base 'Mojolicious::Plugin';
 use Mojo::ByteStream qw/b/;
 use Mojo::JSON;
 
-our $VERSION = 0.02;
+our $VERSION = 0.03;
 
 has logs => sub { return [] };
 
 my %types_map = (
-    'debug' => 'log',
+    'debug' => '',
     'info'  => 'info',
     'warn'  => 'warn',
     'error' => 'error',
@@ -17,7 +17,11 @@ my %types_map = (
 );
 
 sub register {
-    my ( $self, $app ) = @_;
+    my ( $self, $app, $opts ) = @_;
+
+    $opts->{show_session} //= 1;
+    $opts->{show_config}  //= 1;
+    $opts->{show_stash}   //= 1;
 
     # We do use monkey patch instead of inheriting Mojo::Log to be compatible with Log::Any::Adapter::Mojo
     $self->_monkey_patch_logger();
@@ -39,11 +43,35 @@ sub register {
                 rows    => []
             };
 
+            my $rows = $data->{rows};
+
+            my $group = 'Mojolicious ' . $c->req->url->path->to_string;
+            # Start group
+            push @$rows, [[ $group ], undef,  'groupCollapsed'];
+
+            # Add session
+            if ( $opts->{show_session} ) {
+                push @$rows, [[ { '___class_name' => 'Session', %{$c->session} }], undef,  ''];
+            }
+
+            # Add config
+            if ( $opts->{show_config} ) {
+                push @$rows, [[ { '___class_name' => 'Config', %{$c->config} }], undef,  ''];
+            }
+
+            # Add stash
+            if ( $opts->{show_stash} ) {
+                my %clean_stash = map { $_ => $c->stash($_) } grep { $_ !~ /^(?:mojo\.|config$)/ } keys %{ $c->stash };
+                push @$rows, [[ { '___class_name' => 'Stash', %clean_stash }], undef,  ''];
+            }
+
             # Logs: fatal, info, debug, error
             foreach my $msg (@$logs) {
-                push @{ $data->{rows} },
-                  [ $msg->[1], $msg->[2], $types_map{ $msg->[0] } ];
+                push @$rows, [ $msg->[1], $msg->[2], $types_map{ $msg->[0] } ];
             }
+
+            # End group
+            push @$rows, [[ $group ], undef,  'groupEnd'];
 
             my $json       = Mojo::JSON->new()->encode($data);
             my $final_data = b($json)->b64_encode('');
@@ -65,7 +93,7 @@ sub _monkey_patch_logger {
 
         *{"Mojo::Log::$level"} = sub {
             my ($package, $filename, $line) = caller;
-            push @{ $self->logs }, [ $level, [ $_[-1] ], "at $filename:$line" ];
+            push @{ $self->logs }, [ $level, [ '> ' . $_[-1] ], "at $filename:$line" ];
             $orig->(@_);
         };
     }
@@ -75,11 +103,11 @@ sub _monkey_patch_logger {
 
 =head1 NAME
 
-Mojolicious::Plugin::ChromeLogger - Show Mojolicious logs in Google Chrome console
+Mojolicious::Plugin::ChromeLogger - Push Mojolicious logs to Google Chrome console
 
 =head1 DESCRIPTION
 
-L<Mojolicious::Plugin::ChromeLogger> pushes Mojolicious log messages to Google Chrome console. Works with any types of responses(even with JSON).
+L<Mojolicious::Plugin::ChromeLogger> pushes Mojolicious log messages, stash, session and config to Google Chrome console. Works with all types of responses(including JSON).
 To view logs in Google Chrome you should install ChromeLogger extenstion. Logging works only in development mode.
 
 See details here http://craig.is/writing/chrome-logger

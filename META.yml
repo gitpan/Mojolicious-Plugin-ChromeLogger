@@ -1,5 +1,5 @@
 ---
-abstract: 'Show Mojolicious logs in Google Chrome console'
+abstract: 'Push Mojolicious logs to Google Chrome console'
 author:
   - 'Viktor Turskyi <koorchik@cpan.org>'
 build_requires:
@@ -20,4 +20,4 @@ no_index:
 requires:
   Mojolicious: 4.0
   perl: 5.01
-version: 0.02
+version: 0.03
