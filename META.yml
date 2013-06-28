@@ -1,5 +1,5 @@
 ---
-abstract: 'Push Mojolicious logs to Google Chrome console'
+abstract: 'Pushes Mojolicious logs, stash, session, config to Google Chrome console'
 author:
   - 'Viktor Turskyi <koorchik@cpan.org>'
 build_requires:
@@ -20,4 +20,4 @@ no_index:
 requires:
   Mojolicious: 4.0
   perl: 5.01
-version: 0.04
+version: 0.05

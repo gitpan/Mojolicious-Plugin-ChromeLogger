@@ -1,5 +1,5 @@
 {
-   "abstract" : "Push Mojolicious logs to Google Chrome console",
+   "abstract" : "Pushes Mojolicious logs, stash, session, config to Google Chrome console",
    "author" : [
       "Viktor Turskyi <koorchik@cpan.org>"
    ],
@@ -38,5 +38,5 @@
       }
    },
    "release_status" : "stable",
-   "version" : "0.04"
+   "version" : "0.05"
 }
